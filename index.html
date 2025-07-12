@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Planilha Lotomania - Aposta Espelho</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+    h1 {
+      text-align: center;
+    }
+    table {
+      border-collapse: collapse;
+      margin: 20px auto;
+    }
+    td, th {
+      width: 40px;
+      height: 40px;
+      text-align: center;
+      vertical-align: middle;
+      border: 1px solid #333;
+      cursor: pointer;
+      user-select: none;
+      font-size: 16px;
+    }
+    .fixed {
+      background-color: #ffcc00;
+      font-weight: bold;
+    }
+    .selected {
+      background-color: #66ccff;
+    }
+    .game-info {
+      text-align: center;
+      margin-top: 20px;
+    }
+    #counter {
+      font-size: 16px;
+      margin-bottom: 10px;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      margin-top: 20px;
+      display: block;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    #gamesOutput {
+      white-space: pre-wrap;
+      text-align: center;
+      margin-top: 20px;
+      font-family: monospace;
+      font-size: 18px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Planilha Lotomania - Aposta Espelho</h1>
+  <table id="lotteryTable"></table>
+
+  <div class="game-info">
+    <p><strong>Dezenas Fixas:</strong> 01, 12, 23, 34, 45, 56, 67, 78, 89, 00, 10, 19, 28, 37, 46, 55, 64, 73, 82, 91</p>
+    <p id="counter">Dezenas selecionadas: 20 (fixas) + 0 (adicionais) = 20 / 55</p>
+    <p>Selecione mais <strong>35 dezenas</strong> para gerar 2 jogos com 50 dezenas cada.</p>
+    <button onclick="generateGames()">Gerar Jogos</button>
+    <div id="gamesOutput"></div>
+  </div>
+
+  <script>
+    const fixedNumbers = new Set([1, 12, 23, 34, 45, 56, 67, 78, 89, 100, 10, 19, 28, 37, 46, 55, 64, 73, 82, 91]);
+    const selectedNumbers = new Set([...fixedNumbers]); // Inicializa com as fixas
+
+    function createLotteryTable() {
+      const table = document.getElementById('lotteryTable');
+      let number = 1;
+
+      for (let row = 0; row < 10; row++) {
+        const tr = document.createElement('tr');
+        for (let col = 0; col < 10; col++) {
+          const td = document.createElement('td');
+          const currentNumber = number === 100 ? 100 : number;
+          td.textContent = currentNumber === 100 ? '00' : String(currentNumber).padStart(2, '0');
+          td.dataset.value = currentNumber;
+
+          if (fixedNumbers.has(currentNumber)) {
+            td.classList.add('fixed');
+          } else {
+            td.addEventListener('click', () => toggleSelection(td));
+          }
+
+          tr.appendChild(td);
+          number++;
+        }
+        table.appendChild(tr);
+      }
+    }
+
+    function toggleSelection(cell) {
+      const num = parseInt(cell.dataset.value);
+      if (fixedNumbers.has(num)) return;
+
+      if (cell.classList.contains('selected')) {
+        cell.classList.remove('selected');
+        selectedNumbers.delete(num);
+      } else {
+        if (selectedNumbers.size >= 55) {
+          alert("Você só pode selecionar até 35 dezenas adicionais além das 20 fixas.");
+          return;
+        }
+        cell.classList.add('selected');
+        selectedNumbers.add(num);
+      }
+      updateCounter();
+    }
+
+    function updateCounter() {
+      const additionalCount = selectedNumbers.size - fixedNumbers.size;
+      const totalSelected = selectedNumbers.size;
+      document.getElementById('counter').textContent =
+        `Dezenas selecionadas: ${fixedNumbers.size} (fixas) + ${additionalCount} (adicionais) = ${totalSelected} / 55`;
+    }
+
+    function generateGames() {
+      const additional = [...selectedNumbers].filter(n => !fixedNumbers.has(n));
+      if (additional.length !== 35) {
+        alert("Por favor, selecione exatamente 35 dezenas adicionais.");
+        return;
+      }
+
+      const combined = [...fixedNumbers, ...additional].map(Number).sort((a, b) => a - b);
+      const game1 = combined.slice(0, 50);
+      const game2 = combined.slice(25, 75); // overlap de 25 dezenas entre os jogos
+
+      document.getElementById('gamesOutput').textContent =
+`Jogo 1 (${game1.length} dezenas):
+${formatGame(game1)}
+
+Jogo 2 (${game2.length} dezenas):
+${formatGame(game2)}
+`;
+    }
+
+    function formatGame(numbers) {
+      return numbers.map(n => n.toString().padStart(2, '0')).join(' ');
+    }
+
+    createLotteryTable();
+  </script>
+</body>
+</html>
